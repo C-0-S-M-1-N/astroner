@@ -15,43 +15,46 @@
  * }
  *   
 */
+#define Tsx 8
+#define Tsy 8
 
+#ifdef _WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <bits/stdc++.h>
 #include <SFML/Graphics.hpp>
+//#include "../engine.cpp"
+#include "meniu.cpp"
+#include "settings.cpp"
+#include "saves.cpp"
+//#include "testLevel.cpp"
+#include "../level1.cpp"
 
-int WIDTH = 1920;//Daca va uitati prin cod si vedeti ca rezolutia e prea mare/mica chill ca se schimba in funtie de ecran cand se face fullscreen
-int HEIGHT = 1080;
 
-sf::RenderWindow win(sf::VideoMode(WIDTH, HEIGHT), "astroner!", sf::Style::Fullscreen);
+std::string GetCurrentDir(void){
+/*	char buff[1000];
+	GetCurrentDir(buff, 1000);
+	return std::string(buff);
+*/
+	return "..";	
+}
+
+
+float WIDTH = 1920;//Daca va uitati prin cod si vedeti ca rezolutia e prea mare/mica chill ca se schimba in funtie de ecran cand se face fullscreen
+float HEIGHT = 1080;
+
 float DeltaTime; //Delta time, seconds since the last frame has beenm drawn
 
 bool open = 1;
 
-enum scenes{
-    MENIU,
-    SETTINGS,
-    LEVELSELECTOR,
-    LEVEL1,
-    LEVEL2,
-    LEVEL3,
-    LEVEL4,
-    LEVEL5,
-    LEVEL6,
-    LEVEL7,
-    LEVEL8,
-    LEVEL9,
-    FINAL,
-    TEST
-};
-
-scenes Cscene = MENIU;
-#include "bullet.hpp"
-#include "others.cpp"
-
-//cea mai mare greseala sa folosesc namespace-uri da bine ca e doar in main() deci pana la urma e 20% ok
-using namespace std;
-using namespace sf;
-
+astr::player Player(sf::Vector2f(20 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT));
 sf::Texture shipTextureStatic;
 sf::Texture shipTextureDown;
 sf::Texture shipTextureUp;
@@ -65,46 +68,40 @@ astr::entity ship(20 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT, 20 * 
 astr::entity enemy(40 * WIDTH/HEIGHT, 40 * WIDTH/HEIGHT, 40 * WIDTH/HEIGHT, 40 * WIDTH/HEIGHT);
 float px, py, enemHP = 10;
 
-#include "meniu.cpp"
 
-#include "saves.cpp"
-
-#define Tsx 8
-#define Tsy 8
 
 
 
 float enemyPlayerX = 0, enemyPlayerY = 0; //experimental!!
-CircleShape enemyB(5);
+sf::CircleShape enemyB(5);
 bool shot = 0;
 int HP = 3;
 
 //RectangleShape ship(Vector2f(30, 20));
 //RectangleShape enemy(Vector2f(40, 40));
 
-#include "bullet.hpp"
-#include "player.cpp"
 
-Clock cl2, enemyclock;
+sf::Clock cl2, enemyclock;
 
-Time bulletDelay = cl2.getElapsedTime();
-vector <bullet> glont;
+sf::Time bulletDelay = cl2.getElapsedTime();
+std::vector <bullet> glont;
 
 bool setup();
 bool colision(float x1, float x2, float y1, float y2, float w1, float w2, float h1, float h2);
 
 
 //include Levels
-#include "testLevel.cpp"
-#include "level1.cpp"
 
 int main(){
     // Cscene = LEVEL1;
     //maximum e de 60fps ca altfel bubuie placa video :D
+	sf::RenderWindow win(sf::VideoMode(WIDTH, HEIGHT), "astroner!", sf::Style::Fullscreen);
 
-    win.setFramerateLimit(60);
-    f.loadFromFile("fonts\\PressStart.ttf");
-    f2.loadFromFile("fonts\\light_pixel-7.ttf");
+
+    win.setVerticalSyncEnabled(1);
+    
+	f.loadFromFile("../fonts/PressStart.ttf");
+    f2.loadFromFile( "../fonts/light_pixel-7.ttf");
     // std::thread load(setup);
 
     if(setup()){
@@ -121,8 +118,8 @@ int main(){
     // ship.setOrigin(0, 0);
     //enemy.setFillColor(Color::Red);
 
-    enemy.setPosition(700 * WIDTH/HEIGHT, 300 * WIDTH/HEIGHT);
-    enemyB.setFillColor(Color::White); //experimental!!
+    enemy.setPosition(700 * (float)WIDTH/HEIGHT, 300 * (float)WIDTH/HEIGHT);
+    enemyB.setFillColor(sf::Color::White); //experimental!!
     // ship.setPosition(400, 300);
 
     ship.thing.setTexture(&shipTextureStatic);
@@ -134,9 +131,9 @@ int main(){
     Supdate();
     while(win.isOpen()){
         if(!open) {win.close(); break;}
-        Event event;
+		sf::Event event;
         while(win.pollEvent(event)){
-            if(event.type == Event::Closed || (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape) && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))){
+            if(event.type == sf::Event::Closed || (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape) && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))){
                 win.close();
             }
             WIDTH = win.getSize().x;
@@ -145,25 +142,27 @@ int main(){
 
         switch(Cscene){
             case MENIU:
-                meniu();
+                meniu(win);
             break;
             case SETTINGS:
-                settings();
+                settings(win);
             break;
             case LEVELSELECTOR:
-                Cscene = scenes(saves()+2);
+                Cscene = scenes(saves(win)+2);
                 // levelTest();
             break;
             case LEVEL1:
                 lvl1(win);
             break;
+			default:
+			break;
         }
 
         DeltaTime = D_time.restart().asSeconds();
     }
 
     // load.join();
-    ofstream of("settings.ast");
+	std::ofstream of(GetCurrentDir() + "settings.ast");
 
     of<<sound.getValue()<<'\n';
 
@@ -183,8 +182,10 @@ bool colision(float x1, float x2, float y1, float y2, float w1, float w2, float 
 
 //load data, nu te atinge ca poate.l strici, doar adauga chestii :D
 bool setup(){
+	sf::String cdir = GetCurrentDir();
+	cdir = ".";
     sf::Image textures, bullets;
-    if(!textures.loadFromFile("textures\\ships_models.png") && !bullets.loadFromFile("textures\\bullets.png")){
+    if(!textures.loadFromFile(cdir + "./textures/ships_models.png") && !bullets.loadFromFile(cdir + "./textures/bullets.png")){
         return 0;
     }
 
@@ -201,15 +202,15 @@ bool setup(){
 
     //elementele pt UI, muzica, meniu, etc.
     {
-        theme.openFromFile("sounds\\main_meniu.ogg");
+        theme.openFromFile(cdir + "./sounds/main_meniu.ogg");
         theme.play();
         theme.setLoop(true);
 
-        img.loadFromFile("textures\\meniu_background.png", IntRect(0, 0, WIDTH, HEIGHT));
+        img.loadFromFile(cdir + "./textures/meniu_background.png", sf::IntRect(0, 0, WIDTH, HEIGHT));
         background.setTexture(img);
         background.setScale(3, 3);
-        background.setOrigin(img.getSize().x/2, img.getSize().y/2);
-        background.setPosition(Vector2f(WIDTH/2, HEIGHT/2));
+        background.setOrigin((float)img.getSize().x/2, (float)img.getSize().y/2);
+        background.setPosition(sf::Vector2f(WIDTH/2, HEIGHT/2));
 
         //meniu Buttons
         welcome.setFont(f);
@@ -234,7 +235,7 @@ bool setup(){
         sound.setPosition(10 * WIDTH/HEIGHT, 100 * WIDTH/HEIGHT);
         sound.setTextPos(250 * WIDTH/HEIGHT, 90 * WIDTH/HEIGHT);
         
-        ifstream in("settings.ast");
+		std::ifstream in("../settings.ast");
         int s;
         in>>s;
         sound.setValue(s);
@@ -250,7 +251,7 @@ bool setup(){
     //Level1
     {
         
-        if(!Enemy1.loadFromImage(textures, IntRect(Tsx * 8, Tsy * 6, 16, 16))) return 0;
+        if(!Enemy1.loadFromImage(textures, sf::IntRect(Tsx * 8, Tsy * 6, 16, 16))) return 0;
     }
     return 0;
 }

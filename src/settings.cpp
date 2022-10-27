@@ -1,26 +1,36 @@
 #pragma once
 #include <SFML/Audio.hpp>
-#include "others.cpp"
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Sprite.hpp>
+#include <bits/stdc++.h>
+#include <SFML/Graphics.hpp>
+#include "../engine.cpp"
 
-UI::Button backButton(200 * WIDTH/HEIGHT, 50 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT, f, "BACK");
+extern sf::Font f;
+extern sf::Clock rotation, cR;
+extern float rot;
+extern sf::Music theme;
+extern sf::Sprite background;
+
+UI::Button backButton(200 * WIDTH/HEIGHT, 50 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT, f, "BACK", "");
 UI::Slider sound(50 * WIDTH/HEIGHT, 200 * WIDTH/HEIGHT, 20 * WIDTH/HEIGHT, f, "SOUND(0%)");
 int selecte = 1;
 sf::Keyboard::Key k[2] = {sf::Keyboard::Key::Space, sf::Keyboard::Key::Escape};
 
 
-void Sdisplay();
+void Sdisplay(sf::RenderWindow&);
 void Sinput();
 void Supdate();
 
-int settings(){
+int settings(sf::RenderWindow& win){
     std::thread t1(Sinput);
-    Sdisplay();
+    Sdisplay(win);
     t1.join();
 
     return 1;
 }
 
-void Sdisplay(){
+void Sdisplay(sf::RenderWindow &win){
     sf::Time t = rotation.getElapsedTime();
     if(t.asMilliseconds() > 15){
         rotation.restart();
@@ -31,14 +41,14 @@ void Sdisplay(){
     win.draw(background);
     
 
-    backButton.drawB();
-    sound.draw();
+    backButton.drawB(win);
+    sound.draw(win);
 
     win.display();
 }
 
 void Sinput(){
-    Time t = cR.getElapsedTime();
+	sf::Time t = cR.getElapsedTime();
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::S) && t.asMilliseconds() >= 200){
         if(selecte < 3) selecte ++;
         Supdate();

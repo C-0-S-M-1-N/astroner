@@ -1,7 +1,13 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <bits/stdc++.h>
 #include <cmath>
+#include "../engine.cpp"
+
+extern sf::Font f2;
+extern float WIDTH, HEIGHT, DeltaTime;
 
 const int LEVELS = 10;
 int Ls = 1;
@@ -65,7 +71,7 @@ public:
         selected = s;
         ob.setFillColor(normal);
     }
-    void display(){
+    void display(sf::RenderWindow &win){
         win.draw(mark);
         win.draw(ob);
     }
@@ -88,23 +94,23 @@ sf::Text levelName;
 
 static sf::Clock inpc;
 
-void sDisplaY();
+void sDisplaY(sf::RenderWindow&);
 void sLoad();
 void iP(); //input, n.am alt nume :/
 void Updt(); //update, e la fel la input
 
-int saves(){
+int saves(sf::RenderWindow& win){
     std::thread t1(iP);
-    sDisplaY();
+    sDisplaY(win);
     t1.join();
-    if(ret)
-    return Ls;
+    if(ret)	return Ls;
+	else return 0;
 }
 
-void sDisplaY(){
+void sDisplaY(sf::RenderWindow &win){
     win.clear();
-    for(auto i:v) i.display();
-    endL.display();
+    for(auto i:v) i.display(win);
+    endL.display(win);
 
     win.draw(levelName);
 

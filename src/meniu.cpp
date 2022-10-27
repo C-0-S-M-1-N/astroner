@@ -1,5 +1,13 @@
 #pragma once
 #include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <bits/stdc++.h>
+#include "../engine.cpp"
+
+extern float WIDTH, HEIGHT, DeltaTime;
+extern bool open;
+extern scenes Cscene;
 
 int selectat = 1;
 float rot = 0;
@@ -13,7 +21,7 @@ sf::Image im;
 
 sf::Music theme;
 
-void Mdisplay();
+void Mdisplay(sf::RenderWindow&);
 void inputM();
 void MupdateB();
 
@@ -23,14 +31,14 @@ UI::Button settingsButton(200 * WIDTH/HEIGHT, 50 * WIDTH/HEIGHT, 20 * WIDTH/HEIG
 
 sf::Clock cR, rotation;
 
-int meniu(){
+int meniu(sf::RenderWindow& win){
     std::thread inp(inputM);
-    Mdisplay();
+    Mdisplay(win);
     inp.join();
     return 1;
 }
 
-void Mdisplay(){
+void Mdisplay(sf::RenderWindow &win){
     sf::Time t = rotation.getElapsedTime();
     if(t.asMilliseconds() > 15){
         rotation.restart();
@@ -41,28 +49,27 @@ void Mdisplay(){
 
     win.draw(background);
 
-    playButton.drawB();
-    quitButton.drawB();
-    settingsButton.drawB();
+    playButton.drawB(win);
+    quitButton.drawB(win);
+    settingsButton.drawB(win);
 
     win.draw(welcome);
     win.display();
 }
 
-#include "settings.cpp"
 void inputM(){
     sf::Time tR = cR.getElapsedTime();
-    if(Keyboard::isKeyPressed(Keyboard::S) && tR.asMilliseconds() >= 120){
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::S) && tR.asMilliseconds() >= 120){
         if(selectat < 3) selectat++;
         MupdateB();
         cR.restart();
     }
-    else if(Keyboard::isKeyPressed(Keyboard::W) && tR.asMilliseconds() >= 120){
+    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W) && tR.asMilliseconds() >= 120){
         if(selectat > 1) selectat--;
         MupdateB();
         cR.restart();
     }
-    else if(Keyboard::isKeyPressed(Keyboard::Enter)){
+    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)){
         if(selectat == 1) {theme.stop(); Cscene = LEVELSELECTOR;}
         else if(selectat == 2) {Cscene = SETTINGS; cR.restart();}
         else if(selectat == 3){

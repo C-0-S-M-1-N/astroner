@@ -1,0 +1,3 @@
+/home/cosmin/projects/astroner/build/CMakeFiles/astroner.dir
+/home/cosmin/projects/astroner/build/CMakeFiles/edit_cache.dir
+/home/cosmin/projects/astroner/build/CMakeFiles/rebuild_cache.dir

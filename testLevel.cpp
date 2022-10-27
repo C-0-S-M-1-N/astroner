@@ -1,7 +1,5 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-using namespace sf;
-using namespace std;
 
 void render(){
     if(!enemHP) enemy.setPosition(10000 * WIDTH/HEIGHT, 100000 * WIDTH/HEIGHT);
